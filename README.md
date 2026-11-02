@@ -21,7 +21,23 @@ Right-click the icon for the menu: *Toggle fn mode*, *Record Shortcut…*, *Star
 
 ## Install
 
-Requires macOS 13+ and the Xcode Command Line Tools (`xcode-select --install`).
+Requires macOS 13+ (Apple Silicon or Intel).
+
+### Download
+
+1. Grab **FnLockBar.zip** from the [latest release](https://github.com/TobiasWust/FnLockBar/releases/latest).
+2. Unzip it and move **FnLockBar.app** to `/Applications` (or `~/Applications`).
+3. Open it.
+
+FnLockBar isn't notarized by Apple, so the first launch is blocked by Gatekeeper. Either go to **System Settings → Privacy & Security** and click **Open Anyway**, or remove the quarantine flag:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/FnLockBar.app
+```
+
+### Build from source
+
+Needs the Xcode Command Line Tools (`xcode-select --install`).
 
 ```bash
 ./build.sh
@@ -31,7 +47,15 @@ Requires macOS 13+ and the Xcode Command Line Tools (`xcode-select --install`).
 open ~/Applications/FnLockBar.app
 ```
 
-`build.sh` compiles `main.swift`, wraps it in an ad-hoc signed `.app` bundle and installs it to `~/Applications`. Re-run it after changing the code (quit the running app first).
+`build.sh` compiles `main.swift` for arm64 and x86_64, wraps it in an ad-hoc signed `.app` bundle and installs it to `~/Applications`. Re-run it after changing the code (quit the running app first).
+
+### Releasing
+
+Push a version tag and GitHub Actions builds the app and attaches `FnLockBar.zip` to a new release:
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
 
 ## Recording a shortcut
 
