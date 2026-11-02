@@ -50,6 +50,14 @@ A manual toggle (click, shortcut, BTT, …) inside an app with a rule lasts unti
 
 Requires macOS 13+ (Apple Silicon or Intel).
 
+### Homebrew (recommended)
+
+```bash
+brew install --cask tobiaswust/tap/fnlockbar
+```
+
+Updates come with `brew upgrade`. The cask clears the download quarantine, so there's no Gatekeeper prompt.
+
 ### Download
 
 1. Grab **FnLockBar.zip** from the [latest release](https://github.com/TobiasWust/FnLockBar/releases/latest).
@@ -84,7 +92,7 @@ Tests/run.sh
 
 ### Releasing
 
-Push a version tag and GitHub Actions builds the app and attaches `FnLockBar.zip` to a new release:
+Push a version tag and GitHub Actions builds the app, attaches `FnLockBar.zip` to a new release and bumps the cask in [TobiasWust/homebrew-tap](https://github.com/TobiasWust/homebrew-tap) (needs a `TAP_TOKEN` secret: a fine-grained token with *Contents: read and write* on that repo):
 
 ```bash
 git tag v1.0.0 && git push origin v1.0.0

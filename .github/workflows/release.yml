@@ -12,6 +12,9 @@ permissions:
 jobs:
   release:
     runs-on: macos-15
+    env:
+      # Fine-grained token with Contents read/write on TobiasWust/homebrew-tap; the tap step is skipped without it.
+      TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,6 +28,19 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" build/FnLockBar.zip \
             --title "FnLockBar $GITHUB_REF_NAME" --generate-notes
+
+      - name: Update Homebrew tap
+        if: startsWith(github.ref, 'refs/tags/') && env.TAP_TOKEN != ''
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          SHA=$(shasum -a 256 build/FnLockBar.zip | cut -d' ' -f1)
+          git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/TobiasWust/homebrew-tap.git" tap
+          cd tap
+          sed -i '' -E "s/^  version \".*\"/  version \"$VERSION\"/; s/^  sha256 \".*\"/  sha256 \"$SHA\"/" Casks/fnlockbar.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "fnlockbar $VERSION"
+          git push
 
       - name: Upload build artifact
         if: "!startsWith(github.ref, 'refs/tags/')"
