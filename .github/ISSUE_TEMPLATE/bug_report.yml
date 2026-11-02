@@ -1,0 +1,51 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: FnLockBar version
+      description: Settings → General shows it.
+      placeholder: "1.3.0"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "macOS 26.1, Apple Silicon"
+    validations:
+      required: true
+  - type: input
+    id: keyboard
+    attributes:
+      label: Keyboard
+      description: Built-in, Apple Magic Keyboard, or the brand and model of an external keyboard.
+      placeholder: "MacBook built-in"
+    validations:
+      required: true
+  - type: checkboxes
+    id: tools
+    attributes:
+      label: Other keyboard tools installed
+      options:
+        - label: BetterTouchTool
+        - label: Karabiner-Elements
+        - label: Fluor or another fn switcher
+        - label: Keyboard vendor software (Logi Options+, Keychron Launcher, …)
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installed via
+      options:
+        - Homebrew
+        - Zip download
+        - Built from source

@@ -54,4 +54,4 @@ Pushing a `v*` tag builds a release and updates the Homebrew cask.
 
 ---
 
-made with ❤️ by [wust](https://wust.dev) · [buy me a coffee ☕](https://ko-fi.com/tobiaswust)
+made with ❤️ by [wust](https://wust.dev) · [MIT license](LICENSE) · [buy me a coffee ☕](https://ko-fi.com/tobiaswust)

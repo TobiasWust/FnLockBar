@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: External keyboard F-keys don't change?
+    url: https://github.com/TobiasWust/FnLockBar#faq
+    about: Many third-party keyboards ignore the macOS fn setting – check the FAQ first.
