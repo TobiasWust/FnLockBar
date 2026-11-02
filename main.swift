@@ -218,12 +218,55 @@ final class ChangeHUD {
     }
 }
 
+/// Asks GitHub for the latest release; no auto-install, just tells the user.
+final class UpdateChecker {
+    struct Release: Decodable {
+        let tag_name: String
+        let html_url: URL
+        var version: String { tag_name.hasPrefix("v") ? String(tag_name.dropFirst()) : tag_name }
+    }
+
+    static let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
+    private let endpoint = URL(string: "https://api.github.com/repos/TobiasWust/FnLockBar/releases/latest")!
+
+    /// The newer release, if one was found on the last check.
+    private(set) var available: Release?
+
+    func check(completion: @escaping (Result<Release?, Error>) -> Void = { _ in }) {
+        var request = URLRequest(url: endpoint)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+            let result: Result<Release?, Error> = Result {
+                if let error { throw error }
+                let release = try JSONDecoder().decode(Release.self, from: data ?? Data())
+                return UpdateChecker.isNewer(release.version, than: UpdateChecker.currentVersion) ? release : nil
+            }
+            DispatchQueue.main.async {
+                if case .success(let release) = result { self?.available = release }
+                completion(result)
+            }
+        }.resume()
+    }
+
+    /// Numeric compare of dotted versions: 1.10.0 > 1.9.2, 1.1 == 1.1.0.
+    static func isNewer(_ a: String, than b: String) -> Bool {
+        let pa = a.split(separator: ".").map { Int($0) ?? 0 }
+        let pb = b.split(separator: ".").map { Int($0) ?? 0 }
+        for i in 0..<max(pa.count, pb.count) {
+            let x = i < pa.count ? pa[i] : 0, y = i < pb.count ? pb[i] : 0
+            if x != y { return x > y }
+        }
+        return false
+    }
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private var last: Bool??
     private var shortcut = Shortcut.load()
     private lazy var hotKey = HotKey { [weak self] in self?.toggle() }
     private let hud = ChangeHUD()
+    private let updates = UpdateChecker()
 
     func applicationDidFinishLaunching(_ note: Notification) {
         item.button?.target = self
@@ -232,7 +275,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotKey.register(shortcut)
         refresh()
         // Cheap registry read; catches changes made by BTT, System Settings, etc.
-        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refresh() }
+        let poll = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refresh() }
+        poll.tolerance = 0.25 // lets macOS coalesce wake-ups with other timers
+
+        updates.check()
+        let daily = Timer.scheduledTimer(withTimeInterval: 24 * 60 * 60, repeats: true) { [weak self] _ in
+            self?.updates.check()
+        }
+        daily.tolerance = 60 * 60
     }
 
     private func refresh() {
@@ -250,22 +300,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.attributedTitle = NSAttributedString(string: "fn",
                 attributes: [.font: NSFont.monospacedSystemFont(ofSize: 13, weight: .bold)])
             button.toolTip = "F1–F12 are function keys (click to switch to media keys)"
+            button.setAccessibilityLabel("FnLockBar: function keys")
         case .some(false):
             button.title = ""
             let img = NSImage(systemSymbolName: "speaker.wave.2", accessibilityDescription: "Media keys")
             img?.isTemplate = true
             button.image = img
             button.toolTip = "F1–F12 are media keys (click to switch to function keys)"
+            button.setAccessibilityLabel("FnLockBar: media keys")
         case .none:
             button.image = nil
             button.title = "fn?"
             button.toolTip = "Could not read fn key mode"
+            button.setAccessibilityLabel("FnLockBar: fn key mode unknown")
         }
     }
 
     @objc private func clicked() {
         if NSApp.currentEvent?.type == .rightMouseUp {
             let menu = NSMenu()
+            if let release = updates.available {
+                let update = NSMenuItem(title: "Update available: \(release.tag_name)…",
+                                        action: #selector(openUpdate), keyEquivalent: "")
+                update.target = self
+                update.image = NSImage(systemSymbolName: "arrow.down.circle.fill", accessibilityDescription: nil)
+                menu.addItem(update)
+                menu.addItem(.separator())
+            }
             menu.addItem(withTitle: "Toggle fn mode", action: #selector(toggle), keyEquivalent: "").target = self
             menu.addItem(.separator())
             let current = NSMenuItem(title: "Shortcut: \(shortcut?.display ?? "none")", action: nil, keyEquivalent: "")
@@ -281,6 +342,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             hudItem.target = self
             hudItem.state = ChangeHUD.isEnabled ? .on : .off
             menu.addItem(hudItem)
+            menu.addItem(withTitle: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "").target = self
             menu.addItem(withTitle: "About FnLockBar", action: #selector(showAbout), keyEquivalent: "").target = self
             menu.addItem(withTitle: "Quit FnLockBar", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
             item.menu = menu
@@ -288,6 +350,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             item.menu = nil
         } else {
             toggle()
+        }
+    }
+
+    @objc private func openUpdate() {
+        if let release = updates.available { NSWorkspace.shared.open(release.html_url) }
+    }
+
+    @objc private func checkForUpdates() {
+        updates.check { result in
+            let alert = NSAlert()
+            switch result {
+            case .success(let release?):
+                alert.messageText = "FnLockBar \(release.tag_name) is available"
+                alert.informativeText = "You have \(UpdateChecker.currentVersion). Download the new version from GitHub, then replace the app."
+                alert.addButton(withTitle: "Open Download Page")
+                alert.addButton(withTitle: "Later")
+            case .success(nil):
+                alert.messageText = "You're up to date"
+                alert.informativeText = "FnLockBar \(UpdateChecker.currentVersion) is the latest version."
+            case .failure(let error):
+                alert.messageText = "Couldn't check for updates"
+                alert.informativeText = error.localizedDescription
+            }
+            NSApp.activate(ignoringOtherApps: true)
+            if alert.runModal() == .alertFirstButtonReturn, case .success(let release?) = result {
+                NSWorkspace.shared.open(release.html_url)
+            }
         }
     }
 

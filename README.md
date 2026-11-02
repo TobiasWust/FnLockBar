@@ -18,9 +18,15 @@ No more guessing which mode you're in.
 - **Global shortcut** – record any shortcut (e.g. `⌃⎋`) to toggle from anywhere. No Accessibility permission required.
 - **Change HUD** – a system-style overlay briefly shows the new mode whenever it changes (can be turned off).
 - **Start at Login** – one checkbox in the menu.
+- **Update check** – tells you in the menu when a new release is out (or check manually via *Check for Updates…*).
 - Native Swift / AppKit, a single source file, no dependencies, near-zero CPU.
 
-Right-click the icon for the menu: *Toggle fn mode*, *Record Shortcut…*, *Start at Login*, *Show HUD on Change*, *About*, *Quit*.
+Right-click the icon for the menu: *Toggle fn mode*, *Record Shortcut…*, *Start at Login*, *Show HUD on Change*, *Check for Updates…*, *About*, *Quit*.
+
+## Good to know
+
+- **External keyboards:** the fn setting is a macOS preference that Apple keyboards follow. Many third-party keyboards (Logitech, Keychron, …) handle the F-row in their own firmware or companion app and ignore it – FnLockBar will still show and switch the macOS setting, but those keys may not change. Check your keyboard's own fn lock (often `fn` + `Esc`) or its software.
+- **Update check:** once at launch and then once a day, FnLockBar asks the public GitHub API for the latest release. Nothing about you or your Mac is sent, and nothing is installed automatically – you get a menu item linking to the download.
 
 ## Install
 

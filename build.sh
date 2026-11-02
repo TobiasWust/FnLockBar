@@ -2,9 +2,11 @@
 # Builds a universal (arm64 + x86_64) FnLockBar.app and installs it to ~/Applications.
 #   ./build.sh               build + install
 #   ./build.sh --no-install  build only (used by CI); also writes build/FnLockBar.zip
-# VERSION=1.2.3 ./build.sh   sets the version shown in the About panel
+# VERSION=1.2.3 ./build.sh   sets the version shown in the About panel (default: latest git tag)
 set -euo pipefail
 cd "$(dirname "$0")"
+# Defaults to the latest git tag, so local builds don't report themselves as outdated
+VERSION=${VERSION:-$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || true)}
 VERSION=${VERSION:-1.0}
 APP=build/FnLockBar.app
 rm -rf build && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
