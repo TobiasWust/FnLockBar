@@ -24,6 +24,14 @@ Or download **FnLockBar.zip** from the [latest release](https://github.com/Tobia
 - **Right-click → For “App”** to give the current app a fixed mode – e.g. function keys in your IDE.
 - **Settings (⌘,)** for the shortcut, Start at Login, the HUD, and all app rules.
 
+## Per-app modes
+
+Real F-keys in your IDE, terminal and games – media keys everywhere else. FnLockBar switches the moment an app comes to the front.
+
+<img src="media/app-rules.png" width="612" alt="App Rules settings: Godot, iTerm, Steam and Visual Studio Code use function keys, Music uses media keys">
+
+Set a rule from the menu (**For “App” ▸**) while you're in the app, or add several at once in **Settings → App Rules**. A manual toggle still works – it lasts until you switch apps.
+
 ## FAQ
 
 **My external keyboard doesn't change.** Many third-party keyboards handle the F-row themselves and ignore the macOS setting. Use the keyboard's own fn lock (often `fn` + `Esc`).
