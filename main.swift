@@ -184,6 +184,10 @@ final class ChangeHUD {
                 .font: NSFont.monospacedSystemFont(ofSize: 64, weight: .bold),
                 .foregroundColor: NSColor.labelColor,
             ])
+            // Text fields draw from the top of their frame, so size to fit and center on the icon area.
+            icon.sizeToFit()
+            icon.setFrameOrigin(NSPoint(x: (size - icon.frame.width) / 2,
+                                        y: imageView.frame.midY - icon.frame.height / 2))
             imageView.image = nil
             caption.stringValue = "Function Keys"
         } else {
