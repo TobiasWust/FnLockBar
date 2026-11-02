@@ -2,6 +2,8 @@
 
 A tiny macOS menu bar app that shows whether your F1–F12 keys are currently **function keys** or **media keys** — and lets you flip between them with a click or a global shortcut.
 
+![FnLockBar demo: pressing ⌃esc toggles the mode, the menu bar icon flips and a HUD shows the new state](media/demo.gif)
+
 | Menu bar | Meaning |
 | --- | --- |
 | **`fn`** | F1–F12 act as standard function keys ("fn lock" on) |
