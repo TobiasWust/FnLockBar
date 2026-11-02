@@ -3,6 +3,7 @@
 #   ./build.sh               build + install
 #   ./build.sh --no-install  build only (used by CI); also writes build/FnLockBar.zip
 # VERSION=1.2.3 ./build.sh   sets the version shown in the About panel (default: latest git tag)
+# SIGN_IDENTITY="Developer ID Application" ./build.sh   signs for notarization (default: ad-hoc "-")
 set -euo pipefail
 cd "$(dirname "$0")"
 # Defaults to the latest git tag, so local builds don't report themselves as outdated
@@ -31,7 +32,14 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>LSMinimumSystemVersion</key><string>13.0</string>
 </dict></plist>
 PLIST
-codesign --force --sign - "$APP"
+# Always hardened runtime (required for notarization), so local builds behave like releases.
+# A secure timestamp is only possible (and only needed) with a real Developer ID.
+SIGN_IDENTITY=${SIGN_IDENTITY:--}
+if [[ "$SIGN_IDENTITY" == "-" ]]; then
+  codesign --force --options runtime --sign - "$APP"
+else
+  codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP"
+fi
 
 if [[ "${1:-}" == "--no-install" ]]; then
   ditto -c -k --keepParent "$APP" build/FnLockBar.zip

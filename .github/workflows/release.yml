@@ -15,11 +15,46 @@ jobs:
     env:
       # Fine-grained token with Contents read/write on TobiasWust/homebrew-tap; the tap step is skipped without it.
       TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+      # Signing + notarization (see RELEASING.md); without these the app is ad-hoc signed as before.
+      DEVELOPER_ID_P12: ${{ secrets.DEVELOPER_ID_P12 }}
+      DEVELOPER_ID_P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+      NOTARY_KEY_P8: ${{ secrets.NOTARY_KEY_P8 }}
+      NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+      NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
     steps:
       - uses: actions/checkout@v4
 
+      - name: Import Developer ID certificate
+        if: env.DEVELOPER_ID_P12 != ''
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD=$(uuidgen)
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          echo "$DEVELOPER_ID_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$DEVELOPER_ID_P12_PASSWORD" -T /usr/bin/codesign
+          rm "$RUNNER_TEMP/cert.p12"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          echo "SIGN_IDENTITY=Developer ID Application" >> "$GITHUB_ENV"
+
       - name: Build
         run: VERSION="${GITHUB_REF_NAME#v}" ./build.sh --no-install
+
+      - name: Notarize
+        if: env.DEVELOPER_ID_P12 != '' && env.NOTARY_KEY_P8 != ''
+        run: |
+          KEY="$RUNNER_TEMP/notary.p8"
+          printf '%s' "$NOTARY_KEY_P8" > "$KEY"
+          xcrun notarytool submit build/FnLockBar.zip --key "$KEY" --key-id "$NOTARY_KEY_ID" \
+            --issuer "$NOTARY_ISSUER_ID" --wait --timeout 30m
+          rm "$KEY"
+          # Attach the ticket so Gatekeeper can verify offline, then re-zip the stapled app
+          xcrun stapler staple build/FnLockBar.app
+          rm build/FnLockBar.zip
+          ditto -c -k --keepParent build/FnLockBar.app build/FnLockBar.zip
+          spctl --assess --type execute -vv build/FnLockBar.app
 
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/')
@@ -48,3 +83,7 @@ jobs:
         with:
           name: FnLockBar
           path: build/FnLockBar.zip
+
+      - name: Remove signing keychain
+        if: always() && env.DEVELOPER_ID_P12 != ''
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true

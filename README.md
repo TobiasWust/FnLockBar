@@ -50,7 +50,7 @@ Set a rule from the menu (**For “App” ▸**) while you're in the app, or add
 Tests/run.sh      # logic tests
 ```
 
-Pushing a `v*` tag builds a release and updates the Homebrew cask.
+Pushing a `v*` tag builds a release and updates the Homebrew cask – see [RELEASING.md](RELEASING.md).
 
 ---
 
