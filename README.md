@@ -14,10 +14,11 @@ No more guessing which mode you're in.
 - **Live indicator** – always reflects the real state, no matter what changed it (FnLockBar, System Settings, BetterTouchTool, …).
 - **Click to toggle** – left-click the icon to switch modes.
 - **Global shortcut** – record any shortcut (e.g. `⌃⎋`) to toggle from anywhere. No Accessibility permission required.
+- **Change HUD** – a system-style overlay briefly shows the new mode whenever it changes (can be turned off).
 - **Start at Login** – one checkbox in the menu.
 - Native Swift / AppKit, a single source file, no dependencies, near-zero CPU.
 
-Right-click the icon for the menu: *Toggle fn mode*, *Record Shortcut…*, *Start at Login*, *About*, *Quit*.
+Right-click the icon for the menu: *Toggle fn mode*, *Record Shortcut…*, *Start at Login*, *Show HUD on Change*, *About*, *Quit*.
 
 ## Install
 

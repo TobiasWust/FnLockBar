@@ -126,11 +126,100 @@ final class HotKey {
     }
 }
 
+/// A system-style overlay that briefly shows the new mode, like the volume/brightness HUD.
+final class ChangeHUD {
+    static let defaultsKey = "showHUD"
+    static var isEnabled: Bool {
+        get { UserDefaults.standard.object(forKey: defaultsKey) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: defaultsKey) }
+    }
+
+    private let size: CGFloat = 180
+    private lazy var panel: NSPanel = {
+        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: size, height: size),
+                            styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
+        panel.level = .statusBar
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.ignoresMouseEvents = true
+        panel.hasShadow = false
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+
+        let background = NSVisualEffectView(frame: panel.contentRect(forFrameRect: panel.frame))
+        background.material = .hudWindow
+        background.state = .active
+        background.wantsLayer = true
+        background.layer?.cornerRadius = 22
+        background.layer?.masksToBounds = true
+        panel.contentView = background
+
+        icon.frame = NSRect(x: 0, y: 62, width: size, height: 90)
+        icon.alignment = .center
+        icon.isBordered = false
+        icon.drawsBackground = false
+        icon.isEditable = false
+        background.addSubview(icon)
+
+        imageView.frame = NSRect(x: (size - 80) / 2, y: 66, width: 80, height: 80)
+        imageView.symbolConfiguration = .init(pointSize: 60, weight: .medium)
+        imageView.contentTintColor = .labelColor
+        background.addSubview(imageView)
+
+        caption.frame = NSRect(x: 0, y: 24, width: size, height: 22)
+        caption.alignment = .center
+        caption.font = .systemFont(ofSize: 15, weight: .semibold)
+        caption.textColor = .secondaryLabelColor
+        background.addSubview(caption)
+        return panel
+    }()
+    private let icon = NSTextField(labelWithString: "")
+    private let imageView = NSImageView()
+    private let caption = NSTextField(labelWithString: "")
+    private var hideWork: DispatchWorkItem?
+
+    func show(functionKeys: Bool) {
+        _ = panel // build views
+        if functionKeys {
+            icon.attributedStringValue = NSAttributedString(string: "fn", attributes: [
+                .font: NSFont.monospacedSystemFont(ofSize: 64, weight: .bold),
+                .foregroundColor: NSColor.labelColor,
+            ])
+            imageView.image = nil
+            caption.stringValue = "Function Keys"
+        } else {
+            icon.stringValue = ""
+            imageView.image = NSImage(systemSymbolName: "speaker.wave.2.fill", accessibilityDescription: "Media keys")
+            caption.stringValue = "Media Keys"
+        }
+
+        // Lower middle of the screen the mouse is on, where macOS shows its own HUDs.
+        let screen = NSScreen.screens.first { NSMouseInRect(NSEvent.mouseLocation, $0.frame, false) } ?? NSScreen.main
+        if let frame = screen?.visibleFrame {
+            panel.setFrameOrigin(NSPoint(x: frame.midX - size / 2, y: frame.minY + frame.height * 0.2))
+        }
+
+        hideWork?.cancel()
+        panel.alphaValue = 1
+        panel.orderFrontRegardless()
+
+        let work = DispatchWorkItem { [weak self] in
+            guard let panel = self?.panel else { return }
+            NSAnimationContext.runAnimationGroup({ ctx in
+                ctx.duration = 0.3
+                panel.animator().alphaValue = 0
+            }, completionHandler: { if panel.alphaValue == 0 { panel.orderOut(nil) } })
+        }
+        hideWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9, execute: work)
+    }
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private var last: Bool??
     private var shortcut = Shortcut.load()
     private lazy var hotKey = HotKey { [weak self] in self?.toggle() }
+    private let hud = ChangeHUD()
 
     func applicationDidFinishLaunching(_ note: Notification) {
         item.button?.target = self
@@ -145,6 +234,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func refresh() {
         let state = FnMode.isFunctionKeys()
         guard state != last else { return }
+        // Show the HUD for real changes only, not for the initial read at launch.
+        if case .some(.some) = last, let state, ChangeHUD.isEnabled {
+            hud.show(functionKeys: state)
+        }
         last = state
         guard let button = item.button else { return }
         switch state {
@@ -180,6 +273,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             login.target = self
             login.state = SMAppService.mainApp.status == .enabled ? .on : .off
             menu.addItem(login)
+            let hudItem = NSMenuItem(title: "Show HUD on Change", action: #selector(toggleHUD), keyEquivalent: "")
+            hudItem.target = self
+            hudItem.state = ChangeHUD.isEnabled ? .on : .off
+            menu.addItem(hudItem)
             menu.addItem(withTitle: "About FnLockBar", action: #selector(showAbout), keyEquivalent: "").target = self
             menu.addItem(withTitle: "Quit FnLockBar", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
             item.menu = menu
@@ -188,6 +285,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             toggle()
         }
+    }
+
+    @objc private func toggleHUD() {
+        ChangeHUD.isEnabled.toggle()
     }
 
     @objc private func toggleLaunchAtLogin() {
