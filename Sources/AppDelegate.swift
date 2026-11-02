@@ -24,6 +24,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         general.shortcutDisplay = shortcut?.display
         general.recordShortcut = { [weak self] in self?.recordShortcut() }
         general.checkForUpdates = { [weak self] in self?.checkForUpdates() }
+        general.previewHUD = { [weak self] style in
+            self?.hud.show(functionKeys: FnMode.isFunctionKeys() ?? true, style: style)
+        }
 
         // Per-app modes: apply to the app that's in front now, then on every switch.
         if let app = watcher.current { applyRule(for: app) }

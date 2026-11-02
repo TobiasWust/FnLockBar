@@ -9,6 +9,13 @@ final class GeneralSettings: ObservableObject {
     @Published var showHUD = ChangeHUD.isEnabled {
         didSet { ChangeHUD.isEnabled = showHUD }
     }
+    @Published var hudStyle = ChangeHUD.style {
+        didSet {
+            ChangeHUD.style = hudStyle
+            previewHUD(hudStyle)
+        }
+    }
+    var previewHUD: (ChangeHUD.Style) -> Void = { _ in }
     @Published private(set) var launchAtLogin = SMAppService.mainApp.status == .enabled
     var recordShortcut: () -> Void = {}
     var checkForUpdates: () -> Void = {}
@@ -57,6 +64,12 @@ struct GeneralView: View {
 
             Section("HUD") {
                 Toggle("Show HUD when the mode changes", isOn: $settings.showHUD)
+                Picker("Size", selection: $settings.hudStyle) {
+                    ForEach(ChangeHUD.Style.allCases, id: \.self) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .fixedSize()
+                .disabled(!settings.showHUD)
                 Toggle("Also when switching apps automatically", isOn: $rules.hudOnAutoSwitch)
                     .disabled(!settings.showHUD || !rules.isEnabled)
             }
