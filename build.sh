@@ -7,7 +7,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 VERSION=${VERSION:-1.0}
 APP=build/FnLockBar.app
-rm -rf build && mkdir -p "$APP/Contents/MacOS"
+rm -rf build && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+cp media/AppIcon.icns "$APP/Contents/Resources/" # regenerate with media/make-icon.sh
 for arch in arm64 x86_64; do
   swiftc -O main.swift -target "$arch-apple-macos13.0" -o "build/FnLockBar-$arch" \
     -framework AppKit -framework IOKit -framework ServiceManagement
@@ -20,6 +21,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleIdentifier</key><string>de.tobiaswust.FnLockBar</string>
   <key>CFBundleName</key><string>FnLockBar</string>
   <key>CFBundleExecutable</key><string>FnLockBar</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>CFBundleVersion</key><string>$VERSION</string>
