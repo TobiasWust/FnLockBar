@@ -318,10 +318,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .foregroundColor: NSColor.labelColor,
             .paragraphStyle: style,
         ]
+        func link(_ title: String, _ url: String) -> NSAttributedString {
+            var attrs = base
+            attrs[.link] = URL(string: url)!
+            return NSAttributedString(string: title, attributes: attrs)
+        }
         let credits = NSMutableAttributedString(string: "made with ❤️ by ", attributes: base)
-        var link = base
-        link[.link] = URL(string: "https://wust.dev")!
-        credits.append(NSAttributedString(string: "wust", attributes: link))
+        credits.append(link("wust", "https://wust.dev"))
+        credits.append(NSAttributedString(string: "\n\n", attributes: base))
+        credits.append(link("GitHub", "https://github.com/TobiasWust/FnLockBar"))
+        credits.append(NSAttributedString(string: "  ·  ", attributes: base))
+        credits.append(link("☕ Support on Ko-fi", "https://ko-fi.com/tobiaswust"))
 
         NSApp.activate(ignoringOtherApps: true)
         NSApp.orderFrontStandardAboutPanel(options: [

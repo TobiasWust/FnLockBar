@@ -91,4 +91,4 @@ FnLockBar can fully replace a BTT "Set Function Key Mode" trigger. If you keep b
 
 ---
 
-made with ❤️ by [wust](https://wust.dev)
+made with ❤️ by [wust](https://wust.dev) · if FnLockBar saves you some guessing, [buy me a coffee on Ko-fi ☕](https://ko-fi.com/tobiaswust)
