@@ -1,8 +1,8 @@
 # FnLockBar
 
-A tiny macOS menu bar app that shows whether your F1–F12 keys are currently **function keys** or **media keys** — and lets you flip between them with a click or a global shortcut.
+A tiny macOS menu bar app that shows whether your F1–F12 keys are currently **function keys** or **media keys** — lets you flip between them with a click or a global shortcut — and can switch automatically per app (real F-keys in your IDE, media keys everywhere else).
 
-![FnLockBar demo: pressing ⌃esc toggles the mode, the menu bar icon flips and a HUD shows the new state](media/demo.gif)
+![FnLockBar demo: pressing ⌃esc toggles the mode and a HUD shows the new state; then switching apps with ⌘tab flips to function keys in Code and back to media keys in Music](media/demo.gif)
 
 | Menu bar | Meaning |
 | --- | --- |
@@ -16,12 +16,30 @@ No more guessing which mode you're in.
 - **Live indicator** – always reflects the real state, no matter what changed it (FnLockBar, System Settings, BetterTouchTool, …).
 - **Click to toggle** – left-click the icon to switch modes.
 - **Global shortcut** – record any shortcut (e.g. `⌃⎋`) to toggle from anywhere. No Accessibility permission required.
+- **Per-app modes** – give apps a fixed mode (e.g. VS Code, Xcode and games → function keys) and FnLockBar switches automatically when they come to the front.
 - **Change HUD** – a system-style overlay briefly shows the new mode whenever it changes (can be turned off).
-- **Start at Login** – one checkbox in the menu.
-- **Update check** – tells you in the menu when a new release is out (or check manually via *Check for Updates…*).
-- Native Swift / AppKit, a single source file, no dependencies, near-zero CPU.
+- **Start at Login** – one switch in Settings.
+- **Update check** – tells you in the menu when a new release is out (or check manually in *Settings → General*).
+- Native Swift / AppKit, no dependencies, near-zero CPU.
 
-Right-click the icon for the menu: *Toggle fn mode*, *Record Shortcut…*, *Start at Login*, *Show HUD on Change*, *Check for Updates…*, *About*, *Quit*.
+**Left-click** the icon to toggle. **Right-click** for the menu – it's deliberately short:
+
+```
+For “Safari” ▸        rule for the app you were just using
+Settings…       ⌘,    shortcut, login, HUD, updates, app rules
+About FnLockBar
+Quit FnLockBar  ⌘Q
+```
+
+When a new version is out, an *Update available* item appears at the top.
+
+## Per-app modes
+
+- **For “App” ▸** in the menu – sets a rule for the app you were just using: *Function Keys*, *Media Keys* or *No Rule*.
+- **Settings → App Rules** – lists all rules; **+** adds apps from `/Applications`, **−** removes the selected rule. It also sets what happens in **apps without a rule** (*Keep Current Mode* by default, *Media Keys* or *Function Keys*) and has the on/off switch for per-app modes, which keeps your rules when off.
+- **Settings → General → HUD** – *Also when switching apps automatically* shows the HUD for automatic switches too (off by default, so app switching stays quiet).
+
+A manual toggle (click, shortcut, BTT, …) inside an app with a rule lasts until you switch apps – when you come back, the rule applies again. Rules are stored by bundle identifier, so renaming or moving an app doesn't break them.
 
 ## Good to know
 
@@ -56,7 +74,13 @@ Needs the Xcode Command Line Tools (`xcode-select --install`).
 open ~/Applications/FnLockBar.app
 ```
 
-`build.sh` compiles `main.swift` for arm64 and x86_64, wraps it in an ad-hoc signed `.app` bundle and installs it to `~/Applications`. Re-run it after changing the code (quit the running app first).
+`build.sh` compiles everything in `Sources/` for arm64 and x86_64, wraps it in an ad-hoc signed `.app` bundle and installs it to `~/Applications`. Re-run it after changing the code (quit the running app first).
+
+The pure logic (rule resolution, settings persistence, version comparison) has a small test suite:
+
+```bash
+Tests/run.sh
+```
 
 ### Releasing
 
@@ -68,7 +92,7 @@ git tag v1.0.0 && git push origin v1.0.0
 
 ## Recording a shortcut
 
-1. Right-click the menu bar icon → **Record Shortcut…**
+1. Right-click the menu bar icon → **Settings…** → **General** → **Record…**
 2. Press the combination you want. It needs at least one modifier (⌃⌥⇧⌘), or can be a bare F-key.
 3. Plain `Esc` cancels, **Remove Shortcut** clears it.
 
@@ -89,7 +113,7 @@ You can check the live value yourself:
 ioreg -c IOHIDSystem -r -d1 -k HIDParameters | grep -o '"HIDFKeyMode"=[0-9]'
 ```
 
-The global shortcut uses Carbon's `RegisterEventHotKey`, and *Start at Login* uses `SMAppService.mainApp`.
+The global shortcut uses Carbon's `RegisterEventHotKey`, and *Start at Login* uses `SMAppService.mainApp`. Per-app modes listen for `NSWorkspace.didActivateApplicationNotification` (no polling), ignore FnLockBar's own windows and debounce fast ⌘-Tab cycling; the mode is only written when it actually changes.
 
 ## Coming from BetterTouchTool?
 

@@ -12,7 +12,7 @@ APP=build/FnLockBar.app
 rm -rf build && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp media/AppIcon.icns "$APP/Contents/Resources/" # regenerate with media/make-icon.sh
 for arch in arm64 x86_64; do
-  swiftc -O main.swift -target "$arch-apple-macos13.0" -o "build/FnLockBar-$arch" \
+  swiftc -O Sources/*.swift -target "$arch-apple-macos13.0" -o "build/FnLockBar-$arch" \
     -framework AppKit -framework IOKit -framework ServiceManagement
 done
 lipo -create build/FnLockBar-arm64 build/FnLockBar-x86_64 -output "$APP/Contents/MacOS/FnLockBar"
