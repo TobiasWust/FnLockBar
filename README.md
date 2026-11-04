@@ -16,7 +16,7 @@ brew tap tobiaswust/tap && brew trust tobiaswust/tap
 brew install --cask fnlockbar
 ```
 
-Or download **FnLockBar.zip** from the [latest release](https://github.com/TobiasWust/FnLockBar/releases/latest). The app isn't notarized, so on first launch click **Open Anyway** in System Settings → Privacy & Security.
+Or download **FnLockBar.zip** from the [latest release](https://github.com/TobiasWust/FnLockBar/releases/latest), unzip, and move it to Applications. The app is signed and notarized by Apple.
 
 ## Use
 

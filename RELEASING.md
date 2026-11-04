@@ -63,5 +63,3 @@ Needs a paid [Apple Developer Program](https://developer.apple.com/programs/) me
 4. Keep the `.p8` somewhere safe (e.g. your password manager), then delete the download.
 
 **Test without releasing:** Actions → Release → **Run workflow** builds, signs and notarizes, and attaches the zip as a build artifact instead of publishing it.
-
-**After the first notarized release:** drop the quarantine `postflight_steps` from the cask and the "Open Anyway" line from the README.
