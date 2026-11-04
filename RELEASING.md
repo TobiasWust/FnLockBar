@@ -25,9 +25,12 @@ Needs a paid [Apple Developer Program](https://developer.apple.com/programs/) me
 
 **1. Developer ID certificate**
 
-1. Xcode → Settings → Accounts → your team → **Manage Certificates…** → **+** → **Developer ID Application**.
-2. Keychain Access → *My Certificates* → right-click **Developer ID Application: …** → **Export…** → save as `.p12` with a password.
-3. Store it:
+1. Keychain Access → menu **Keychain Access → Certificate Assistant → Request a Certificate From a Certificate Authority…** → your email and name, **Saved to disk**.
+   (With Xcode instead: Settings → Accounts → **Manage Certificates…** → **+** → Developer ID Application, then skip to step 3.)
+2. [developer.apple.com → Certificates → +](https://developer.apple.com/account/resources/certificates/add) → **Developer ID Application** (profile type *G2 Sub-CA*) → upload the request → download the `.cer` and double-click it.
+   Check: `security find-identity -v -p codesigning` lists *Developer ID Application: …*.
+3. Keychain Access → *My Certificates* → right-click **Developer ID Application: …** → **Export…** → save as `.p12` with a password.
+4. Store it:
 
    ```bash
    base64 -i ~/Desktop/DeveloperID.p12 | gh secret set DEVELOPER_ID_P12 -R TobiasWust/FnLockBar
@@ -37,7 +40,7 @@ Needs a paid [Apple Developer Program](https://developer.apple.com/programs/) me
    gh secret set DEVELOPER_ID_P12_PASSWORD -R TobiasWust/FnLockBar
    ```
 
-4. Delete the exported `.p12` file.
+5. Delete the exported `.p12` file.
 
 **2. Notary API key**
 
